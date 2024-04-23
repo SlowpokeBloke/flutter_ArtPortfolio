@@ -1,64 +1,32 @@
+// Inside of services/authentication_service.dart
+
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthenticationService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final SharedPreferences _prefs = await SharedPreferences.getInstance();
 
-  // Stream to listen to the authentication state
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
-
-  Future<void> registerWithEmailPassword(String email, String password, String firstName, String lastName) async {
+  // Sign Up with Email and Password
+  Future<String?> signUp({required String email, required String password}) async {
     try {
-      UserCredential userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      await _firestore.collection('users').doc(userCredential.user?.uid).set({
-        'email': email,
-        'firstName': firstName,
-        'lastName': lastName,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Persist authentication state
-      await _prefs.setBool('isAuthenticated', true);
+      await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
+      return null; // No error
     } on FirebaseAuthException catch (e) {
-      print('Failed with error code: ${e.code}');
-      print(e.message);
-      throw e;
+      return e.message; // Return error message
     }
   }
 
-  Future<void> signInWithEmailPassword(String email, String password) async {
+  // Sign In with Email and Password
+  Future<String?> signIn({required String email, required String password}) async {
     try {
-      await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Persist authentication state
-      await _prefs.setBool('isAuthenticated', true);
+      await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
+      return null; // No error
     } on FirebaseAuthException catch (e) {
-      print('Failed with error code: ${e.code}');
-      print(e.message);
-      throw e;
+      return e.message; // Return error message
     }
   }
-  
-  // Function to check if user is authenticated
-  Future<bool> isUserAuthenticated() async {
-    // Read authentication state from local storage
-    return _prefs.getBool('isAuthenticated') ?? false;
-  }
 
-  // Function to sign out
+  // Sign Out
   Future<void> signOut() async {
-    // Clear authentication state from local storage
-    await _prefs.remove('isAuthenticated');
     await _firebaseAuth.signOut();
   }
 }
