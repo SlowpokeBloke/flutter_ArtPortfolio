@@ -1,13 +1,11 @@
-// Inside of services/authentication_service.dart
-
-// Inside of services/authentication_service.dart
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthenticationService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SharedPreferences _prefs = await SharedPreferences.getInstance();
 
   // Stream to listen to the authentication state
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
@@ -25,6 +23,9 @@ class AuthenticationService {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // Persist authentication state
+      await _prefs.setBool('isAuthenticated', true);
     } on FirebaseAuthException catch (e) {
       print('Failed with error code: ${e.code}');
       print(e.message);
@@ -38,6 +39,9 @@ class AuthenticationService {
         email: email,
         password: password,
       );
+
+      // Persist authentication state
+      await _prefs.setBool('isAuthenticated', true);
     } on FirebaseAuthException catch (e) {
       print('Failed with error code: ${e.code}');
       print(e.message);
@@ -45,8 +49,16 @@ class AuthenticationService {
     }
   }
   
-  // This function can be used to sign out the user
+  // Function to check if user is authenticated
+  Future<bool> isUserAuthenticated() async {
+    // Read authentication state from local storage
+    return _prefs.getBool('isAuthenticated') ?? false;
+  }
+
+  // Function to sign out
   Future<void> signOut() async {
+    // Clear authentication state from local storage
+    await _prefs.remove('isAuthenticated');
     await _firebaseAuth.signOut();
   }
 }

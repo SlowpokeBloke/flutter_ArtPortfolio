@@ -1,6 +1,7 @@
+//inside of home/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../screens/user_profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   // This would be passed down or fetched from your user authentication logic
@@ -15,7 +16,7 @@ class HomeScreen extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.account_circle),
           onPressed: () {
-            Navigator.pushNamed(context, 'EditProfileScreen');
+            Navigator.pushNamed(context, '/profile');
           },
         ),
         title: Row(
