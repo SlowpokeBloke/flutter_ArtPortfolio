@@ -35,6 +35,8 @@ dependencies:
   firebase_auth: ^4.17.7
   provider: ^6.0.2  # Check for the latest version on pub.dev
   shared_preferences: ^2.0.8
+  firebase_storage: ^11.7.2
+  image_picker: ^1.1.0
 
 
   
