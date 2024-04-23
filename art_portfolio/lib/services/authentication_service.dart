@@ -1,11 +1,16 @@
 // Inside of services/authentication_service.dart
 
+// Inside of services/authentication_service.dart
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthenticationService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Stream to listen to the authentication state
+  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   Future<void> registerWithEmailPassword(String email, String password, String firstName, String lastName) async {
     try {
@@ -38,5 +43,10 @@ class AuthenticationService {
       print(e.message);
       throw e;
     }
+  }
+  
+  // This function can be used to sign out the user
+  Future<void> signOut() async {
+    await _firebaseAuth.signOut();
   }
 }
