@@ -2,66 +2,102 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/authentication_service.dart';
+import '/services/authentication_service.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _emailController = TextEditingController();
-    final TextEditingController _passwordController = TextEditingController();
-    final authService = Provider.of<AuthenticationService>(context, listen: false);
+    final authService = Provider.of<AuthenticationService>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Login"),
+        title: Text('Login'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: "Email"),
-            ),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: "Password"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  await authService.signInWithEmailPassword(
-                    _emailController.text,
-                    _passwordController.text,
-                  );
-                  Navigator.of(context).pushReplacementNamed('/home'); // Navigate to home on successful login
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text("Failed to log in. Please try again."),
-                  ));
-                }
-              },
-              child: Text("Login"),
-            ),
-            SizedBox(height: 20), // Spacing between login button and the register link
-            GestureDetector(
-              onTap: () {
-                // Navigate to the registration screen
-                Navigator.of(context).pushNamed('/register');
-              },
-              child: Text(
-                "Not registered yet? Sign up here!",
-                style: TextStyle(
-                  color: Colors.blue,
-                  decoration: TextDecoration.underline,
+      body: SingleChildScrollView( // Wrap the Column with SingleChildScrollView
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                FlutterLogo(size: 80), // Replace with your app's logo asset
+                SizedBox(height: 48),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Email',
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Password',
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black, // Set the background color directly
+                    minimumSize: Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  onPressed: () async {
+                    String? result = await authService.signIn(
+                      email: _emailController.text,
+                      password: _passwordController.text,
+                    );
+                    if (result == null) {
+                      // Handle successful login
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                    }
+                  },
+                  child: Text('Login'),
+                ),
+                SizedBox(height: 24),
+                InkWell(
+                  onTap: () {
+                    // Navigate to the registration screen
+                    Navigator.pushNamed(context, '/register');
+                  },
+                  child: RichText(
+                    text: const TextSpan(
+                      text: "Don't have an account? ",
+                      style: TextStyle(color: Colors.black),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: 'Sign up',
+                          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
