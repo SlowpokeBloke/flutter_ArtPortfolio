@@ -1,9 +1,6 @@
-// Inside of services/authentication_service.dart
-
-// Inside of services/authentication_service.dart
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthenticationService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -39,6 +36,7 @@ class AuthenticationService {
 
   // Sign Out
   Future<void> signOut() async {
+    // Clear authentication state from local storage
     await _firebaseAuth.signOut();
   }
 }
