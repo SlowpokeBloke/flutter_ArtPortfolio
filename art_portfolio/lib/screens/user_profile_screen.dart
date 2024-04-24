@@ -124,6 +124,8 @@ class UserProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -165,6 +167,9 @@ class UserProfileScreen extends StatelessWidget {
               ),
             ),
           ),
+
+
+          
         ],
       ),
     );
