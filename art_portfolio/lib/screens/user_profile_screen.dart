@@ -1,24 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '/services/db_helper.dart'; // Update with the correct path
+import '/services/db_helper.dart'; // Ensure the path is correct
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProfileScreen extends StatelessWidget {
   final DBHelper _dbHelper = DBHelper();
   final ImagePicker _picker = ImagePicker();
 
+  UserProfileScreen({Key? key}) : super(key: key);
+
   Future<void> _addArtwork(BuildContext context) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      String imageUrl = await _dbHelper.uploadImage(File(image.path), "artwork_path");
-      await _dbHelper.addArtwork('Artwork Title', imageUrl, 'artist_id_here');
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+    final String artistId = user?.uid ?? '';
+
+    if (artistId.isNotEmpty) {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        String imageUrl = await _dbHelper.uploadImage(File(image.path), "artwork_path/$artistId");
+        await _dbHelper.addArtwork('Artwork Title', imageUrl, artistId);
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No user logged in.")));
+    }
+  }
+
+  Future<void> _addCollection(BuildContext context) async {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+    final String artistId = user?.uid ?? '';
+
+    if (artistId.isNotEmpty) {
+      final List<XFile>? images = await _picker.pickMultiImage();
+      if (images != null && images.length >= 2) {
+        List<String> imageUrls = [];
+        for (var image in images) {
+          String imageUrl = await _dbHelper.uploadImage(File(image.path), "collection_path/$artistId");
+          imageUrls.add(imageUrl);
+        }
+        await _dbHelper.addCollection('New Collection', imageUrls, artistId);
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => CollectionDetailsScreen(imageUrls),
+        ));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please select at least 2 images for the collection.")));
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No user logged in.")));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final String artistId = 'some_artist_id';
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    final User? user = auth.currentUser;
+    final String artistId = user?.uid ?? '';
 
     return Scaffold(
       appBar: AppBar(
@@ -26,13 +64,10 @@ class UserProfileScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () {
-              // Navigate to edit profile screen or show edit options
-            },
+            onPressed: () => Navigator.pushNamed(context, '/editProfile'),
           ),
         ],
       ),
-      
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -125,7 +160,7 @@ class UserProfileScreen extends StatelessWidget {
             ),
           ),
 
-          
+
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -144,18 +179,46 @@ class UserProfileScreen extends StatelessWidget {
                           return Text('Error: ${snapshot.error}');
                         }
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return Text('No collections found');
+                          // Placeholder for adding new collections
+                          return Column(
+                            children: [
+                              InkWell(
+                                onTap: () => _addCollection(context),
+                                child: Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Center(
+                                    child: Text('No collections found. Tap to add a new collection.', style: TextStyle(color: Colors.black)),
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: ElevatedButton(
+                                  onPressed: () => _addCollection(context),
+                                  child: Text('Add Collection'),
+                                ),
+                              ),
+                            ],
+                          );
                         }
 
                         return ListView.builder(
                           itemCount: snapshot.data!.docs.length,
                           itemBuilder: (context, index) {
                             var collection = snapshot.data!.docs[index];
+                            List<String> imageUrls = List<String>.from(collection['imageUrls']); // Assuming 'imageUrls' is a list of strings stored in your collection document
                             return ListTile(
                               title: Text(collection['title']),
-                              leading: Image.network(collection['imageUrl']),
+                              leading: Image.network(collection['imageUrl'], width: 100, height: 100, fit: BoxFit.cover), // Displaying the collection thumbnail
                               onTap: () {
-                                // Navigate to collection detail or display it
+                                // Navigate to collection detail screen and display it
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => CollectionDetailsScreen(imageUrls),
+                                ));
                               },
                             );
                           },
@@ -169,8 +232,38 @@ class UserProfileScreen extends StatelessWidget {
           ),
 
 
-          
+
+
+
         ],
+      ),
+    );
+  }
+}
+
+
+
+// You might need a details screen for collections to show all images
+class CollectionDetailsScreen extends StatelessWidget {
+  final List<String> imageUrls;
+
+  CollectionDetailsScreen(this.imageUrls);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Collection Details'),
+      ),
+      body: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 1,
+        ),
+        itemCount: imageUrls.length,
+        itemBuilder: (context, index) {
+          return Image.network(imageUrls[index], fit: BoxFit.cover);
+        },
       ),
     );
   }
