@@ -21,11 +21,10 @@ class UserProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String artistId = 'some_artist_id';
-    final String currentUserName = 'Mark'; // Replace with dynamic data as needed
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("$currentUserName's Profile"),
+        title: Text("Mark's Profile"),
         actions: [
           IconButton(
             icon: Icon(Icons.edit),
@@ -39,94 +38,84 @@ class UserProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Works section title
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Works', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            ),
             // Works section
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Works', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  // GridView for artwork thumbnails
-                  SizedBox(
-                    height: 150,
-                    child: StreamBuilder(
-                      stream: _dbHelper.getArtworks(artistId),
-                      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        }
-                        if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        }
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                          return Text('No artworks found');
-                        }
-                        // Grid of artworks
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          scrollDirection: Axis.horizontal,
-                          itemCount: snapshot.data!.docs.length,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 1,
+            SizedBox(
+              height: 200, // Adjust the height as needed
+              child: StreamBuilder(
+                stream: _dbHelper.getArtworks(artistId),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
+
+                  // Prepare a list of widgets representing artworks + the Add button
+                  List<Widget> children = [];
+
+                  // Add button at the start
+                  children.add(
+                    GestureDetector(
+                      onTap: () => _addArtwork(context),
+                      child: Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('assets/Add_ArtWork.png'), // Replace with the path to your custom image
+                            fit: BoxFit.cover,
                           ),
-                          itemBuilder: (context, index) {
-                            var artwork = snapshot.data!.docs[index];
-                            return Container(
-                              margin: EdgeInsets.all(8),
-                              width: 150, // Adjust width
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: NetworkImage(artwork['imageUrl']),
-                                  fit: BoxFit.cover,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  // Add Artwork Button
-                  ElevatedButton(
-                    onPressed: () => _addArtwork(context),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero, // No padding
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), // Adjust the button shape
-                    ),
-                    child: Container(
-                      width: 150, // Set a fixed width for the container
-                      height: 250, // Set a fixed height for the container
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Stack(
-                          children: [
-                            // Custom background image
-                            Image.asset(
-                              'assets/Add_ArtWork.png', // Replace with the path to your custom image
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                            ),
-                            // Plus icon
-                            const Center(
-                              child: Icon(
-                                Icons.add,
-                                size: 50,
-                                color: Colors.white, // Icon color
-                              ),
-                            ),
-                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.add,
+                            size: 50,
+                            color: Colors.white, // Icon color
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  );
 
-                ],
+
+
+                  // Artwork items
+                  if (snapshot.hasData) {
+                    children.addAll(snapshot.data!.docs.map((document) {
+                      return Container(
+                        height: 200, // Set a fixed height for the container
+                        width: 150, // Adjust the width as needed
+                        margin: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(document['imageUrl']),
+                            fit: BoxFit.cover,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      );
+                    }).toList());
+                  } else {
+                    children.add(
+                      Center(child: Text('No artworks found')),
+                    );
+                  }
+
+                  return ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: children,
+                  );
+                },
               ),
             ),
+
+
             // Collections section
             Padding(
               padding: const EdgeInsets.all(8.0),
