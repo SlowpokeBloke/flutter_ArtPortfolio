@@ -325,6 +325,9 @@ class CollectionDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String artistId = 'some_artist_id';
+    final String currentUserName = 'Mark'; // Replace with dynamic data as needed
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Collection Details'),
