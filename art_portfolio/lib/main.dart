@@ -1,69 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'firebase_options.dart'; // Assuming this file is directly under the 'lib' directory
+import 'services/authentication_service.dart'; // Update the import path as necessary
+
+import 'screens/artist_profile_screen.dart';
+import 'screens/collection_detail_screen.dart';
+import 'screens/edit_profile_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/messaging_screen.dart';
+import 'screens/registration_screen.dart';
+import 'screens/user_profile_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    // Wrapping MaterialApp with MultiProvider to provide the AuthenticationService
+    return MultiProvider(
+      providers: [
+        StreamProvider<User?>.value(
+          value: FirebaseAuth.instance.authStateChanges(),
+          initialData: null,
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        Provider<AuthenticationService>(
+          create: (_) => AuthenticationService(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Artfolio',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        // Use a Builder to access the context below the MultiProvider
+        home: Builder(builder: (context) {
+          return AuthenticationWrapper();
+        }),
+        // Define routes
+        routes: {
+          '/login': (context) => LoginScreen(),
+          '/register': (context) => RegistrationScreen(),
+          '/home': (context) => HomeScreen(),
+          '/artist_profile': (context) => ArtistProfileScreen(),
+          '/collection_detail': (context) => CollectionDetailScreen(),
+          '/edit_profile': (context) => EditProfileScreen(),
+          '/messaging': (context) => MessagingScreen(),
+          '/user_profile': (context) => UserProfileScreen(),
+        },
       ),
     );
+  }
+}
+
+class AuthenticationWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<User?>(context);
+
+    // If the user is not signed in, show the LoginScreen.
+    // If the user is signed in, show the HomeScreen.
+    return user != null ? HomeScreen() : LoginScreen();
   }
 }
