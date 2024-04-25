@@ -2,30 +2,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
+// DBHelper class adjustment
 class DBHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Function to upload image to Firebase Storage and return the URL
   Future<String> uploadImage(File imageFile, String path) async {
-    Reference ref = _storage.ref().child(path);
+    Reference ref = _storage.ref().child("$path/${imageFile.path.split("/").last}");
     UploadTask uploadTask = ref.putFile(imageFile);
     TaskSnapshot snapshot = await uploadTask;
-    String imageUrl = await snapshot.ref.getDownloadURL();
-    return imageUrl;
+    return await snapshot.ref.getDownloadURL();
   }
 
-  // Function to add artwork to Firestore
   Future<void> addArtwork(String title, String imageUrl, String artistId) async {
     await _firestore.collection('artworks').add({
       'title': title,
       'imageUrl': imageUrl,
       'artistId': artistId,
-      'timestamp': FieldValue.serverTimestamp(), // For sorting purposes
+      'timestamp': FieldValue.serverTimestamp(),
     });
   }
 
-  // Function to create a new collection in Firestore
   Future<void> addCollection(String title, List<String> artworkIds, String artistId) async {
     await _firestore.collection('collections').add({
       'title': title,
@@ -34,6 +31,7 @@ class DBHelper {
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
+
 
   // Function to get artworks for a specific artist
   Stream<QuerySnapshot> getArtworks(String artistId) {
