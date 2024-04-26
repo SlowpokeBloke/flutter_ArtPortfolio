@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
           '/artist_profile': (context) => ArtistProfileScreen(),
           '/collection_detail': (context) => CollectionDetailScreen(),
           '/edit_profile': (context) => EditProfileScreen(),
-          '/messaging': (context) => MessagingScreen(),
+          // '/messaging': (context) => MessagingScreen(),
           '/user_profile': (context) => UserProfileScreen(),
         },
       ),
