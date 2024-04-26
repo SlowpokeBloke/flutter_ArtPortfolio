@@ -140,14 +140,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       ),
                                     ),
                                   ),
-
-
                                 ),
-                                const SizedBox(
-                                    height:
-                                        5), // Spacing between the button and text
-                                const Text(
-                                  'Add Artwork', // Text label for the button
+                                const SizedBox(height:5), // Spacing between the button and text
+                                const Text('Add Artwork', // Text label for the button
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -209,34 +204,45 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       if (snapshot.hasError) {
                         return Text('Error: ${snapshot.error}');
                       }
-
                       List<Widget> children = [
                         Padding(
                           padding: EdgeInsets.only(left: 16.0),
                           child: GestureDetector(
                             onTap: () => _addCollection(context),
-                            child: Container(
-                              width: 130,
-                              height: 260,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: const DecorationImage(
-                                  image: AssetImage('assets/placeholder.png'),
-                                  fit: BoxFit.cover,
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 130,
+                                  height: 260, // Adjust the height to accommodate the text below the button
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    image: const DecorationImage(
+                                      image: AssetImage('assets/placeholder.png'),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 50,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.add,
-                                  size: 50,
-                                  color: Colors.white,
+                                const SizedBox(height: 8), // Space between the image and the text
+                                const Text(
+                                  'Add Collection', // Text label for the button
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ),
                       ];
-
                       if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
                         print("Collections data received: ${snapshot.data!.docs.length} collections");
                         for (var documentSnapshot in snapshot.data!.docs) {
@@ -260,8 +266,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 );
                               },
                               child: Container(
-                                width: 150,
-                                height: 150,
+                                width: 140,
+                                height: 145,
                                 margin: EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8),
@@ -281,7 +287,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ),
                         );
                       }
-
                       return ListView(
                         scrollDirection: Axis.horizontal,
                         children: children,
@@ -293,14 +298,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
           ),
 
-
-
-
-
-
-
-
-          
         ],
       ),
     );
