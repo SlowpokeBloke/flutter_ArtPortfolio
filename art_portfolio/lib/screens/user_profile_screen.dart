@@ -27,46 +27,54 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         String imageUrl = await _dbHelper.uploadImage(
-            File(image.path), "artwork_path/$artistId");
+            File(image.path), "artwork_path", artistId);
         await _dbHelper.addArtwork('Artwork Title', imageUrl, artistId);
       }
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("No user logged in.")));
     }
+
+    
   }
 
-  Future<void> _addCollection(BuildContext context) async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final User? user = auth.currentUser;
-    final String artistId = user?.uid ?? '';
+  
 
-    if (artistId.isNotEmpty) {
-      final List<XFile>? images = await _picker.pickMultiImage();
-      if (images != null && images.isNotEmpty) {
-        List<String> imageUrls = [];
-        for (var image in images) {
-          String imageUrl = await _dbHelper.uploadImage(
-              File(image.path), "collection_path/$artistId");
+Future<void> _addCollection(BuildContext context) async {
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  final User? user = auth.currentUser;
+  final String artistId = user?.uid ?? '';
+
+  if (artistId.isNotEmpty) {
+    final List<XFile>? images = await _picker.pickMultiImage();
+    if (images != null && images.isNotEmpty) {
+      List<String> imageUrls = []; 
+      for (var image in images) {
+        // Ensure each image file path is unique
+        String imageUrl = await _dbHelper.uploadImage(
+            File(image.path), "collection_path", artistId);
+        if (imageUrl.isNotEmpty) {
           imageUrls.add(imageUrl);
         }
-        await _dbHelper.addCollection('New Collection', imageUrls, artistId);
-        setState(() {
-          _firstCollectionImageUrl = imageUrls.first; // Set the first selected image as the thumbnail
-        });
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => CollectionDetailsScreen(imageUrls),
-        ));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                Text("Please select at least 1 image for the collection.")));
       }
+      await _dbHelper.addCollection('', imageUrls, artistId);
+      setState(() {
+        _firstCollectionImageUrl = imageUrls.first;
+      });
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => CollectionDetailsScreen(imageUrls),
+      ));
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("No user logged in.")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Please select at least 1 image for the collection.")));
     }
+  } else {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("No user logged in.")));
   }
+}
+
+
 
 
   @override
@@ -88,6 +96,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,9 +150,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                       ),
                                     ),
                                   ),
+
+
                                 ),
-                                const SizedBox(height:5), // Spacing between the button and text
-                                const Text('Add Artwork', // Text label for the button
+                                const SizedBox(
+                                    height:
+                                        5), // Spacing between the button and text
+                                const Text(
+                                  'Add Artwork', // Text label for the button
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -183,121 +198,120 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             ),
           ),
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Collections',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+
+
+
+Expanded(
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Text(
+          'Collections',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
+      Expanded(
+        child: StreamBuilder(
+          stream: _dbHelper.getCollections(artistId),
+          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            }
+
+            List<Widget> children = [
+              Padding(
+                padding: EdgeInsets.only(left: 16.0),
+                child: GestureDetector(
+                  onTap: () => _addCollection(context),
+                  child: Container(
+                    width: 130,
+                    height: 260,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: const DecorationImage(
+                        image: AssetImage('assets/placeholder.png'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.add,
+                        size: 50,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: StreamBuilder(
-                    stream: _dbHelper.getCollections(artistId),
-                    builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
-                      }
-                      List<Widget> children = [
-                        Padding(
-                          padding: EdgeInsets.only(left: 16.0),
-                          child: GestureDetector(
-                            onTap: () => _addCollection(context),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 130,
-                                  height: 260, // Adjust the height to accommodate the text below the button
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: const DecorationImage(
-                                      image: AssetImage('assets/placeholder.png'),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.add,
-                                      size: 50,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8), // Space between the image and the text
-                                const Text(
-                                  'Add Collection', // Text label for the button
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ];
-                      if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-                        print("Collections data received: ${snapshot.data!.docs.length} collections");
-                        for (var documentSnapshot in snapshot.data!.docs) {
-                          Map<String, dynamic> collectionData = documentSnapshot.data() as Map<String, dynamic>;
-                          List<String> artworkIds = List<String>.from(collectionData['artworkIds'] ?? []);
-                          print("Artwork IDs for collection: $artworkIds");
-                          
-                          // Handle the first image separately as the cover
-                          ImageProvider<Object> coverImageProvider = artworkIds.isNotEmpty
-                              ? NetworkImage(artworkIds.first) as ImageProvider<Object>
-                              : const AssetImage('assets/placeholder.png') as ImageProvider<Object>;
+              ),
+            ];
 
-                          children.add(
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CollectionDetailsScreen(artworkIds),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: 140,
-                                height: 145,
-                                margin: EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  image: DecorationImage(
-                                    image: coverImageProvider,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                      } else {
-                        children.add(
-                          Center(
-                            child: Text('No collections found'),
-                          ),
-                        );
-                      }
-                      return ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: children,
+            if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+              print("Collections data received: ${snapshot.data!.docs.length} collections");
+              snapshot.data!.docs.forEach((documentSnapshot) {
+                  Map<String, dynamic> collectionData = documentSnapshot.data() as Map<String, dynamic>;
+                  List<String> imageUrls = List<String>.from(collectionData['artworkIds'] ?? []);
+                  print("Image URLs for collection: $imageUrls");
+                ImageProvider<Object> imageProvider = imageUrls.isNotEmpty
+                    ? NetworkImage(imageUrls.first) as ImageProvider<Object>
+                    : const AssetImage('assets/placeholder.png') as ImageProvider<Object>;
+
+                children.add(
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CollectionDetailsScreen(imageUrls),
+                        ),
                       );
                     },
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      margin: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
                   ),
+                );
+              });
+            } else {
+              children.add(
+                Center(
+                  child: Text('No collections found'),
                 ),
-              ],
-            ),
-          ),
+              );
+            }
 
+            return ListView(
+              scrollDirection: Axis.horizontal,
+              children: children,
+            );
+          },
+        ),
+      ),
+    ],
+  ),
+),
+
+
+
+
+
+
+
+
+          
         ],
       ),
     );
@@ -305,9 +319,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 }
 
 class CollectionDetailsScreen extends StatelessWidget {
-  final List<String> artworkIds;
+  final List<String> imageUrls;
 
-  CollectionDetailsScreen(this.artworkIds);
+  CollectionDetailsScreen(this.imageUrls);
 
   @override
   Widget build(BuildContext context) {
@@ -320,9 +334,17 @@ class CollectionDetailsScreen extends StatelessWidget {
           crossAxisCount: 3,
           childAspectRatio: 1,
         ),
-        itemCount: artworkIds.length,
+        itemCount: imageUrls.length,
         itemBuilder: (context, index) {
-          return Image.network(artworkIds[index], fit: BoxFit.cover);
+          if (imageUrls.isNotEmpty) {
+            return Image.network(imageUrls[index], fit: BoxFit.cover);
+          } else {
+            // Display placeholder image if collection is empty
+            return Image.asset(
+              'assets/placeholder.png',
+              fit: BoxFit.cover,
+            );
+          }
         },
       ),
     );
