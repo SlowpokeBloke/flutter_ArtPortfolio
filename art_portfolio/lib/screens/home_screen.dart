@@ -120,7 +120,7 @@ StreamBuilder<QuerySnapshot>(
         },
         child: Container(
           width: 150,
-          height: 150,
+          height: 300,
           margin: EdgeInsets.all(8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
