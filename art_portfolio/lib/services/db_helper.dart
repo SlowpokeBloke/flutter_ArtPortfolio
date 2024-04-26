@@ -1,36 +1,45 @@
+//inside of services/db_helper.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
-// DBHelper class adjustment
 class DBHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  // Function to upload image to Firebase Storage and return the URL
   Future<String> uploadImage(File imageFile, String path) async {
-    Reference ref = _storage.ref().child("$path/${imageFile.path.split("/").last}");
+    Reference ref = _storage.ref().child(path);
     UploadTask uploadTask = ref.putFile(imageFile);
     TaskSnapshot snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
+    String imageUrl = await snapshot.ref.getDownloadURL();
+    return imageUrl;
   }
 
+  // Function to add artwork to Firestore
   Future<void> addArtwork(String title, String imageUrl, String artistId) async {
     await _firestore.collection('artworks').add({
       'title': title,
       'imageUrl': imageUrl,
       'artistId': artistId,
-      'timestamp': FieldValue.serverTimestamp(),
+      'timestamp': FieldValue.serverTimestamp(), // For sorting purposes
     });
   }
 
-  Future<void> addCollection(String title, List<String> artworkIds, String artistId) async {
-    await _firestore.collection('collections').add({
-      'title': title,
-      'artworkIds': artworkIds,
-      'artistId': artistId,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-  }
+  // Function to create a new collection in Firestore
+Future<List<String>> addCollection(String title, List<String> imageUrls, String artistId) async {
+  // Add the collection to Firestore with both imageUrls and artworkIds
+  DocumentReference collectionRef = await _firestore.collection('collections').add({
+    'title': title,
+    'imageUrls': imageUrls,
+    'artistId': artistId,
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+
+  // Return the ID of the newly added collection
+  return [collectionRef.id];
+}
 
 
   // Function to get artworks for a specific artist
