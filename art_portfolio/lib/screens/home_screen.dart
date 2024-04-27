@@ -189,50 +189,58 @@ class HomeScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 ),
 
-                StreamBuilder<DocumentSnapshot>(
-  stream: FirebaseFirestore.instance.collection('users').doc(artistId).snapshots(),
+StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance.collection('users').snapshots(),
   builder: (context, snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return CircularProgressIndicator();
     }
     if (snapshot.hasError) {
       print('Error fetching user data: ${snapshot.error}');
-      print('Artist ID: $artistId');
       return Text('Error: ${snapshot.error}');
     }
-    if (!snapshot.hasData || !snapshot.data!.exists) {
-      return Text('User data not found');
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return Text('No users found');
     }
 
-    var userData = snapshot.data!.data() as Map<String, dynamic>;
-    String firstName = userData['firstName'] ?? 'Unknown';
+    // Assuming you have a list of icon asset paths named 'iconPaths' and a Random instance named 'random'
+    // Example: final List<String> iconPaths = ['assets/icons/icon1.png', 'assets/icons/icon2.png', ...];
+    // Example: final Random random = Random();
 
     return Container(
-      height: 100,
+      height: 120, // Increased height to accommodate both icon and text
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 1,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (context, index) {
+          var userDocument = snapshot.data!.docs[index];
+          var userData = userDocument.data() as Map<String, dynamic>;
+          String firstName = userData['firstName'] ?? 'Unknown';
           String iconPath = iconPaths[random.nextInt(iconPaths.length)];
+
           return Container(
             width: 80,
             margin: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              image: DecorationImage(
-                image: AssetImage(iconPath),
-                fit: BoxFit.fill,
-              ),
-            ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: AssetImage(iconPath),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                  ),
+                ),
                 Text(
                   firstName,
                   style: TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -242,8 +250,6 @@ class HomeScreen extends StatelessWidget {
     );
   },
 ),
-
-
 
 
 
