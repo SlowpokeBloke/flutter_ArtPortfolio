@@ -1,5 +1,6 @@
 //inside of home_screen.dart
 
+import 'package:art_portfolio_showcase/screens/artist_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,7 +44,7 @@ class HomeScreen extends StatelessWidget {
             Navigator.pushNamed(context, '/user_profile');
           },
         ),
-        title: Row(
+        title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
@@ -54,7 +55,7 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.exit_to_app),
+            icon: const Icon(Icons.exit_to_app),
             onPressed: () {
               Provider.of<AuthenticationService>(context, listen: false).signOut();
               Navigator.pushReplacementNamed(context, '/login');
@@ -183,7 +184,7 @@ class HomeScreen extends StatelessWidget {
               },
             ),
 
-            Padding(
+            const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text('Connect',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
@@ -193,14 +194,14 @@ StreamBuilder<QuerySnapshot>(
   stream: FirebaseFirestore.instance.collection('users').snapshots(),
   builder: (context, snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return CircularProgressIndicator();
+      return const CircularProgressIndicator();
     }
     if (snapshot.hasError) {
       print('Error fetching user data: ${snapshot.error}');
       return Text('Error: ${snapshot.error}');
     }
     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-      return Text('No users found');
+      return const Text('No users found');
     }
 
     // Assuming you have a list of icon asset paths named 'iconPaths' and a Random instance named 'random'
@@ -217,33 +218,70 @@ StreamBuilder<QuerySnapshot>(
           var userData = userDocument.data() as Map<String, dynamic>;
           String firstName = userData['firstName'] ?? 'Unknown';
           String iconPath = iconPaths[random.nextInt(iconPaths.length)];
+          String artistId = userDocument.reference.id;
 
-          return Container(
-            width: 80,
-            margin: EdgeInsets.all(8),
-            child: Column(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: AssetImage(iconPath),
-                        fit: BoxFit.fill,
+          // return Container(
+          //   width: 80,
+          //   margin: EdgeInsets.all(8),
+          //   child: Column(
+          //     children: [
+          //       Expanded(
+          //         child: Container(
+          //           decoration: BoxDecoration(
+          //             shape: BoxShape.circle,
+          //             image: DecorationImage(
+          //               image: AssetImage(iconPath),
+          //               fit: BoxFit.fill,
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //       Text(
+          //         firstName,
+          //         style: TextStyle(
+          //           color: Colors.black,
+          //           fontWeight: FontWeight.bold,
+          //         ),
+          //         textAlign: TextAlign.center,
+          //       ),
+          //     ],
+          //   ),
+          // );
+          return TextButton(
+            onPressed: () {
+                Navigator.push(context, 
+                  MaterialPageRoute(builder: (context) => 
+                    ArtistProfileScreen(artistId: artistId)
+                  )
+                );
+                },
+            child: Container(
+              width: 80,
+              margin: EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: AssetImage(iconPath),
+                          fit: BoxFit.fill,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Text(
-                  firstName,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    firstName,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+                ],
+              ),
+            )
           );
         },
       ),
