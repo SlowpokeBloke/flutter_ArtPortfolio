@@ -8,7 +8,7 @@ import '../firebase_options.dart';
 
 class MessagingScreen extends StatefulWidget {
   const MessagingScreen({Key? key, required this.recipientName, required this.recipientId}) : super(key: key);
-  //recipient user info vars here
+  //recipient user info vars
   final String recipientName;
   final String recipientId;
   @override
