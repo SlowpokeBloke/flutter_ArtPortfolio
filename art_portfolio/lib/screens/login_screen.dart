@@ -57,7 +57,7 @@ class LoginScreen extends StatelessWidget {
                 SizedBox(height: 24),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black, // Set the background color directly
+                    backgroundColor: Colors.black,
                     minimumSize: Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
@@ -69,13 +69,15 @@ class LoginScreen extends StatelessWidget {
                       password: _passwordController.text,
                     );
                     if (result == null) {
-                      // Handle successful login
+                      // Navigate to the home screen upon successful login
+                      Navigator.pushReplacementNamed(context, '/home');
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
                     }
                   },
                   child: Text('Login'),
                 ),
+
                 SizedBox(height: 24),
                 InkWell(
                   onTap: () {
