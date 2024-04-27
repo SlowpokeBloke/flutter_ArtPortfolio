@@ -44,4 +44,9 @@ class DBHelper {
   Stream<QuerySnapshot> getCollections(String artistId) {
     return _firestore.collection('collections').where('artistId', isEqualTo: artistId).snapshots();
   }
+
+  // Function to get profile information for a specific artist
+  Future<DocumentSnapshot> getArtistInfo(String artistId) async {
+    return await _firestore.collection('users').doc(artistId).get();
+  }
 }
