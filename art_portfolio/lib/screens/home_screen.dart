@@ -8,6 +8,7 @@ import '../services/authentication_service.dart';
 import 'package:provider/provider.dart';
 import 'dart:math';
 import 'package:project/screens/messaging_screen.dart';
+import '../screens/artist_profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final DBHelper _dbHelper = DBHelper();
@@ -246,11 +247,11 @@ class HomeScreen extends StatelessWidget {
 
                 return GestureDetector(
                   onTap: () {
-                    // Navigate to the MessagingScreen with the selected user's ID
+                    // Navigate to the ArtistProfileScreen with the selected user's ID
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MessagingScreen(receiverId: userId),
+                        builder: (context) => ArtistProfileScreen(artistId: userId),
                       ),
                     );
                   },
