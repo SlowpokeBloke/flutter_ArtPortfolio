@@ -120,8 +120,6 @@ Future<void> _addCollection(BuildContext context) async {
                       }
 
                       List<Widget> children = [
-
-                        
                         Padding(
                           padding: EdgeInsets.only(left: 16.0),
                           child: GestureDetector(
