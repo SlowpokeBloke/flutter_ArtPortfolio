@@ -31,58 +31,81 @@ class _MessagingScreenState extends State<MessagingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Messaging with ${widget.receiverId}')),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('messages')
-                .where('senderId', isEqualTo: _auth.currentUser!.uid)
-                .where('receiverId', isEqualTo: widget.receiverId)
-                .orderBy('timestamp', descending: true)
-                .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                    reverse: true,
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (context, index) {
-                      var message = snapshot.data!.docs[index];
-                      return ListTile(
-                        title: Text(message['text']),
-                        subtitle: Text(message['senderId'] == _auth.currentUser!.uid ? 'You' : 'Them'),
-                      );
-                    },
-                  );
-                } else if (snapshot.hasError) {
-                  return Text('Error loading messages');
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            ),
+      appBar: AppBar(
+  title: FutureBuilder<DocumentSnapshot>(
+    future: _firestore.collection('users').doc(widget.receiverId).get(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Text("Loading...");
+      } else if (snapshot.hasError) {
+        return Text("Error: ${snapshot.error}");
+      } else if (snapshot.hasData && snapshot.data!.exists) {
+        Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+        String receiverFirstName = data['firstName'] ?? 'Unknown';  // Updated to use 'firstName'
+        return Text('Messaging with $receiverFirstName');
+      } else {
+        return Text('Messaging with Unknown');  // Updated to give a more specific fallback message
+      }
+    },
+  ),
+),
+
+
+
+    body: Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('messages')
+              .where('senderId', isEqualTo: _auth.currentUser!.uid)
+              .where('receiverId', isEqualTo: widget.receiverId)
+              .orderBy('timestamp', descending: true)
+              .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Text('Error loading messages: ${snapshot.error}');
+              } else if (snapshot.hasData && snapshot.data!.docs.isEmpty) {
+                return Text('No messages');
+              } else {
+                return ListView.builder(
+                  reverse: true,
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    var message = snapshot.data!.docs[index];
+                    return ListTile(
+                      title: Text(message['text']),
+                      subtitle: Text(message['senderId'] == _auth.currentUser!.uid ? 'You' : 'Them'),
+                    );
+                  },
+                );
+              }
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(labelText: 'Send a message...'),
-                  ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(labelText: 'Send a message...'),
                 ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: Icon(Icons.send),
+                onPressed: _sendMessage,
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 
   @override
   void dispose() {
