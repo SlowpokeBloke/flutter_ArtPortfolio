@@ -329,23 +329,43 @@ class CollectionDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Collection Details'),
       ),
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 1,
-        ),
+      body: ListView.builder(
+        scrollDirection: Axis.horizontal,
         itemCount: imageUrls.length,
         itemBuilder: (context, index) {
-          if (imageUrls.isNotEmpty) {
-            return Image.network(imageUrls[index], fit: BoxFit.cover);
-          } else {
-            // Display placeholder image if collection is empty
-            return Image.asset(
-              'assets/placeholder.png',
-              fit: BoxFit.cover,
-            );
-          }
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                _showImageFullScreen(context, imageUrls[index]);
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.network(
+                  imageUrls[index],
+                  width: 200, // Adjust width as needed
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
         },
+      ),
+    );
+  }
+
+  void _showImageFullScreen(BuildContext context, String imageUrl) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(),
+          body: Center(
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
       ),
     );
   }
