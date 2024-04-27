@@ -77,6 +77,19 @@ flutter:
   assets:
     - assets/Add_ArtWork.png
     - assets/placeholder.png
+    - assets/ppl/1.png
+    - assets/ppl/2.png
+    - assets/ppl/3.png
+    - assets/ppl/4.png
+    - assets/ppl/5.png
+    - assets/ppl/6.png
+    - assets/ppl/7.png
+    - assets/ppl/8.png
+    - assets/ppl/9.png
+    - assets/ppl/10.png
+    - assets/ppl/11.png
+    - assets/ppl/12.png
+    - assets/ppl/13.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
