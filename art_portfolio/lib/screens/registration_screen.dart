@@ -1,6 +1,5 @@
 // inside of screens/registration_screen.dart
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '/services/authentication_service.dart'; // assuming you have a file for authentication service
 
