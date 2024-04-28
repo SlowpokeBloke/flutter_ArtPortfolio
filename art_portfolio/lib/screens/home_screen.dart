@@ -8,15 +8,25 @@ import '/services/db_helper.dart'; // Ensure the path is correct
 import '../services/authentication_service.dart';
 import 'package:provider/provider.dart';
 import 'dart:math';
+import '../screens/messaging_screen.dart';
+import '../screens/artist_profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final DBHelper _dbHelper = DBHelper();
 
   HomeScreen({Key? key}) : super(key: key);
 
+  Future<String> _fetchUserName() async {
+  var user = FirebaseAuth.instance.currentUser;
+  return user?.displayName ?? "User";  // Assuming the display name is set, otherwise default to "User"
+}
+
+
   @override
   Widget build(BuildContext context) {
     final String artistId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
       final List<String> iconPaths = [
     'assets/ppl/1.png',
     'assets/ppl/2.png',
@@ -37,20 +47,31 @@ class HomeScreen extends StatelessWidget {
   final Random random = Random();
 
     return Scaffold(
-      appBar: AppBar(
+
+      appBar:AppBar(
+
         leading: IconButton(
           icon: Icon(Icons.account_circle),
           onPressed: () {
             Navigator.pushNamed(context, '/user_profile');
           },
         ),
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Text('Welcome back, user', overflow: TextOverflow.ellipsis),
-            ),
-          ],
+        title: FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).get(),
+          builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Text("Loading...", overflow: TextOverflow.ellipsis);
+            }
+            if (snapshot.hasError) {
+              return Text("Error", overflow: TextOverflow.ellipsis);
+            }
+            if (!snapshot.hasData || !snapshot.data!.exists) {
+              return Text("Welcome back, User", overflow: TextOverflow.ellipsis);
+            }
+            Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+            String userName = userData['firstName'] ?? 'User';  // Assuming 'firstName' is stored in Firestore
+            return Text('Welcome back, $userName', overflow: TextOverflow.ellipsis);
+          },
         ),
         centerTitle: true,
         actions: <Widget>[
@@ -63,6 +84,8 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+
+
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -190,107 +213,82 @@ class HomeScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 ),
 
-StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance.collection('users').snapshots(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return const CircularProgressIndicator();
-    }
-    if (snapshot.hasError) {
-      print('Error fetching user data: ${snapshot.error}');
-      return Text('Error: ${snapshot.error}');
-    }
-    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-      return const Text('No users found');
-    }
+      StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Text('No users found');
+          }
 
-    // Assuming you have a list of icon asset paths named 'iconPaths' and a Random instance named 'random'
-    // Example: final List<String> iconPaths = ['assets/icons/icon1.png', 'assets/icons/icon2.png', ...];
-    // Example: final Random random = Random();
+          final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return Container(
-      height: 120, // Increased height to accommodate both icon and text
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: snapshot.data!.docs.length,
-        itemBuilder: (context, index) {
-          var userDocument = snapshot.data!.docs[index];
-          var userData = userDocument.data() as Map<String, dynamic>;
-          String firstName = userData['firstName'] ?? 'Unknown';
-          String iconPath = iconPaths[random.nextInt(iconPaths.length)];
-          String artistId = userDocument.reference.id;
+          return Container(
+            height: 120, // Adjusted height for better UI
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                var userDocument = snapshot.data!.docs[index];
+                var userData = userDocument.data() as Map<String, dynamic>;
+                String userId = userDocument.id; // Get the user's ID from the document
+                
+                // Skip the currently logged-in user
+                if (userId == currentUserId) {
+                  return SizedBox.shrink(); // This will not take any space in the ListView
+                }
 
-          // return Container(
-          //   width: 80,
-          //   margin: EdgeInsets.all(8),
-          //   child: Column(
-          //     children: [
-          //       Expanded(
-          //         child: Container(
-          //           decoration: BoxDecoration(
-          //             shape: BoxShape.circle,
-          //             image: DecorationImage(
-          //               image: AssetImage(iconPath),
-          //               fit: BoxFit.fill,
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-          //       Text(
-          //         firstName,
-          //         style: TextStyle(
-          //           color: Colors.black,
-          //           fontWeight: FontWeight.bold,
-          //         ),
-          //         textAlign: TextAlign.center,
-          //       ),
-          //     ],
-          //   ),
-          // );
-          return TextButton(
-            onPressed: () {
-                Navigator.push(context, 
-                  MaterialPageRoute(builder: (context) => 
-                    ArtistProfileScreen(artistId: artistId)
-                  )
-                );
-                },
-            child: Container(
-              width: 80,
-              margin: EdgeInsets.all(8),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: AssetImage(iconPath),
-                          fit: BoxFit.fill,
-                        ),
+                String firstName = userData['firstName'] ?? 'Unknown';
+                String iconPath = iconPaths[random.nextInt(iconPaths.length)]; // Randomly select an icon
+
+                return GestureDetector(
+                  onTap: () {
+                    // Navigate to the ArtistProfileScreen with the selected user's ID
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ArtistProfileScreen(artistId: userId),
                       ),
+                    );
+                  },
+                  child: Container(
+                    width: 80,
+                    margin: EdgeInsets.all(8),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                image: AssetImage(iconPath),
+                                fit: BoxFit.fill,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          firstName,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    firstName,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            )
+                );
+              },
+            ),
           );
         },
       ),
-    );
-  },
-),
-
-
-
 
 
           ],

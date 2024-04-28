@@ -1,4 +1,4 @@
-import 'package:art_portfolio_showcase/screens/messaging_screen.dart';
+import '/screens/messaging_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '/services/db_helper.dart';
@@ -18,14 +18,11 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
   // ArtistProfileScreen({Key? key}) : super(key: key);
 
   final DBHelper _dbHelper = DBHelper();
-  // final ImagePicker _picker = ImagePicker();
   String? _firstCollectionImageUrl;
-
 
   @override
   Widget build(BuildContext context) {
     var artistId = widget.artistId;
-    //var artistName = "";
 
     // String artistName = FirebaseFirestore.instance.collection("users").doc(artistId).get().then((doc) => null);
     var artistName = _dbHelper.getArtistInfo(artistId).then((doc) {
@@ -160,13 +157,3 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
     );
   }
 }
-
-// Future<String> getArtistName(){
-//   await _dbHelper.getArtistInfo(artistId).then((doc) {
-//       if (doc.exists){
-//         return doc.get("firstName").toString();
-//       } else {
-//         return "NAME_NOTFOUND";
-//       }
-//     })
-// }

@@ -17,6 +17,7 @@ class MessagingScreen extends StatefulWidget {
 
 class _MessagingScreenState extends State<MessagingScreen>{
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final TextEditingController _msgController = TextEditingController();
   final MessagingService _msgService = MessagingService();
@@ -25,13 +26,31 @@ class _MessagingScreenState extends State<MessagingScreen>{
     if(_msgController.text.isNotEmpty){
       await _msgService.sendMessage(widget.recipientId, _msgController.text);
       _msgController.clear();
+
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('MessagingScreen')),
+      appBar: AppBar(
+        title: FutureBuilder<DocumentSnapshot>(
+          future: _firestore.collection('users').doc(widget.recipientId).get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Text("Loading...");
+            } else if (snapshot.hasError) {
+              return Text("Error: ${snapshot.error}");
+            } else if (snapshot.hasData && snapshot.data!.exists) {
+              Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+              String receiverFirstName = data['firstName'] ?? 'Unknown';  // Updated to use 'firstName'
+              return Text('Messaging with $receiverFirstName');
+            } else {
+              return Text('Messaging with Unknown');  // Updated to give a more specific fallback message
+            }
+          },
+        ),
+      ),
       body: Column(
         children: [
           Expanded(child: _buildMsgList(),),
