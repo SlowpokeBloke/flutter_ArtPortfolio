@@ -1,5 +1,6 @@
 //inside of home_screen.dart
 
+import 'package:art_portfolio_showcase/screens/artist_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,7 +8,7 @@ import '/services/db_helper.dart'; // Ensure the path is correct
 import '../services/authentication_service.dart';
 import 'package:provider/provider.dart';
 import 'dart:math';
-import 'package:project/screens/messaging_screen.dart';
+import '../screens/messaging_screen.dart';
 import '../screens/artist_profile_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -75,7 +76,7 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.exit_to_app),
+            icon: const Icon(Icons.exit_to_app),
             onPressed: () {
               Provider.of<AuthenticationService>(context, listen: false).signOut();
               Navigator.pushReplacementNamed(context, '/login');
@@ -206,7 +207,7 @@ class HomeScreen extends StatelessWidget {
               },
             ),
 
-            Padding(
+            const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text('Connect',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),

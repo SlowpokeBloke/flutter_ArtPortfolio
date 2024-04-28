@@ -37,6 +37,7 @@ class AuthenticationService {
 
   // Sign Out
   Future<void> signOut() async {
+    // Clear authentication state from local storage
     await _firebaseAuth.signOut();
   }
 }

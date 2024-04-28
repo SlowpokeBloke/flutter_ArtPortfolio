@@ -1,30 +1,32 @@
+import 'package:art_portfolio_showcase/services/messaging_service.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../firebase_options.dart';
+
 
 class MessagingScreen extends StatefulWidget {
-  final String receiverId; // Assuming you pass the receiver's ID when navigating to this screen
-
-  const MessagingScreen({Key? key, required this.receiverId}) : super(key: key);
-
+  const MessagingScreen({Key? key, required this.recipientName, required this.recipientId}) : super(key: key);
+  //recipient user info vars
+  final String recipientName;
+  final String recipientId;
   @override
   _MessagingScreenState createState() => _MessagingScreenState();
 }
 
-class _MessagingScreenState extends State<MessagingScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class _MessagingScreenState extends State<MessagingScreen>{
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void _sendMessage() async {
-    if (_messageController.text.isNotEmpty) {
-      await _firestore.collection('messages').add({
-        'text': _messageController.text,
-        'senderId': _auth.currentUser!.uid,
-        'receiverId': widget.receiverId,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      _messageController.clear();
+  final TextEditingController _msgController = TextEditingController();
+  final MessagingService _msgService = MessagingService();
+
+  void sendMessage() async {
+    if(_msgController.text.isNotEmpty){
+      await _msgService.sendMessage(widget.recipientId, _msgController.text);
+      _msgController.clear();
+
     }
   }
 
@@ -32,84 +34,93 @@ class _MessagingScreenState extends State<MessagingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: FutureBuilder<DocumentSnapshot>(
-    future: _firestore.collection('users').doc(widget.receiverId).get(),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Text("Loading...");
-      } else if (snapshot.hasError) {
-        return Text("Error: ${snapshot.error}");
-      } else if (snapshot.hasData && snapshot.data!.exists) {
-        Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
-        String receiverFirstName = data['firstName'] ?? 'Unknown';  // Updated to use 'firstName'
-        return Text('Messaging with $receiverFirstName');
-      } else {
-        return Text('Messaging with Unknown');  // Updated to give a more specific fallback message
-      }
-    },
-  ),
-),
+        title: FutureBuilder<DocumentSnapshot>(
+          future: _firestore.collection('users').doc(widget.recipientId).get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Text("Loading...");
+            } else if (snapshot.hasError) {
+              return Text("Error: ${snapshot.error}");
+            } else if (snapshot.hasData && snapshot.data!.exists) {
+              Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+              String receiverFirstName = data['firstName'] ?? 'Unknown';  // Updated to use 'firstName'
+              return Text('Messaging with $receiverFirstName');
+            } else {
+              return Text('Messaging with Unknown');  // Updated to give a more specific fallback message
+            }
+          },
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(child: _buildMsgList(),),
+          _buildMsgInput(),
+        ]
+        // ListView.builder(
+        //   itemCount: rooms.length,
+        //   itemBuilder: (context, index) {
+        //     Room item = rooms[index];
+        //     return ListTile(
+        //       title: Text(item.roomName),
+        //       onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context) => MessageScreen(roomId: item.roomId,)));},
+        //     );
+        //   },
+        // ),
+      ),
+    );
+  }
 
+  //build msg list
+  Widget _buildMsgList() {
+    return StreamBuilder(
+      stream: _msgService.getMessages(widget.recipientId, _firebaseAuth.currentUser!.uid), 
+      builder: (context, snapshot) {
+        if(snapshot.hasError){
+          return Text('Error$snapshot.error');
+        }
+        if (snapshot.connectionState == ConnectionState.waiting){
+          return const Text("Loading...");
+        }
 
+        return ListView(
+          children: snapshot.data!.docs.map((doc) => _buildMsgItem(doc)).toList(),
 
-    body: Column(
+        );
+    });
+  }
+
+  //build msg item
+  Widget _buildMsgItem(DocumentSnapshot doc){
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    //msgs from curr user aligned right, else left align
+    var align = (data['senderId'] == _firebaseAuth.currentUser!.uid) ? Alignment.centerRight : Alignment.centerLeft;
+    
+    return Container(
+      alignment: align,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          mainAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)? MainAxisAlignment.end : MainAxisAlignment.start,
+          children: [
+            Text(data['senderEmail']),
+            Text(data['message']),
+          ],
+        ), 
+      )
+    );
+
+  }
+
+  //buld msg input
+  Widget _buildMsgInput() {
+    return Row(
       children: [
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: _firestore.collection('messages')
-              .where('senderId', isEqualTo: _auth.currentUser!.uid)
-              .where('receiverId', isEqualTo: widget.receiverId)
-              .orderBy('timestamp', descending: true)
-              .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Text('Error loading messages: ${snapshot.error}');
-              } else if (snapshot.hasData && snapshot.data!.docs.isEmpty) {
-                return Text('No messages');
-              } else {
-                return ListView.builder(
-                  reverse: true,
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    var message = snapshot.data!.docs[index];
-                    return ListTile(
-                      title: Text(message['text']),
-                      subtitle: Text(message['senderId'] == _auth.currentUser!.uid ? 'You' : 'Them'),
-                    );
-                  },
-                );
-              }
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(labelText: 'Send a message...'),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.send),
-                onPressed: _sendMessage,
-              ),
-            ],
-          ),
-        ),
+        //txt field
+        Expanded(child: TextField(controller: _msgController, obscureText: false,)),
+        //send btn
+        IconButton(onPressed: sendMessage, icon: const Icon(Icons.send))
       ],
-    ),
-  );
-}
-
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
+    );
   }
 }

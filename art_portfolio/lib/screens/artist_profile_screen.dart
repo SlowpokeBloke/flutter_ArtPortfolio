@@ -6,69 +6,99 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
-
 class ArtistProfileScreen extends StatefulWidget {
+  const ArtistProfileScreen({super.key, required this.artistId});
   final String artistId;
-  const ArtistProfileScreen({Key? key, required this.artistId}) : super(key: key);
 
   @override
   _ArtistProfileScreenState createState() => _ArtistProfileScreenState();
 }
 
 class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
-  // Assuming DBHelper is correctly implemented and has a method getArtistInfo that returns a Future<DocumentSnapshot>.
+  // ArtistProfileScreen({Key? key}) : super(key: key);
+
   final DBHelper _dbHelper = DBHelper();
+  String? _firstCollectionImageUrl;
 
   @override
   Widget build(BuildContext context) {
     var artistId = widget.artistId;
 
-    // Use a FutureBuilder to handle the asynchronous fetch of artist data.
+    // String artistName = FirebaseFirestore.instance.collection("users").doc(artistId).get().then((doc) => null);
+    var artistName = _dbHelper.getArtistInfo(artistId).then((doc) {
+      if (doc.exists){
+        return doc.get("firstName").toString();
+      } else {
+        return "NAME_NOTFOUND";
+      }
+    });
+    
+    Widget futuremsgbtn = FutureBuilder(
+      future: artistName,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError){
+          return IconButton(icon: const Icon(Icons.mail),
+              onPressed: () {
+                Navigator.push(context, 
+                  MaterialPageRoute(builder: (context) => 
+                    MessagingScreen(recipientName: snapshot.data!, recipientId: artistId)
+                  )
+                );
+                },);
+        } else if (snapshot.hasError){
+          return const Text("failed fetching user profile data");
+        } else {
+          return const Text("Loading...");
+        }
+      },
+    );
+
+    // Widget FutureAppBar = FutureBuilder(
+    //   future: _dbHelper.getArtistInfo(artistId),
+    //   builder: (context, snapshot) {
+    //     var userDocument = snapshot.data!;
+    //     var userData = userDocument.data() as Map<String, dynamic>;
+    //     String firstName = userData['firstName'] ?? 'Unknown';
+    //     String artistId = userDocument.reference.id;
+        
+    //     return AppBar(
+    //       title: Text("$firstName's Profile"),
+    //       actions: [futuremsgbtn],
+    //     );
+    //   }
+    // );
+
     return Scaffold(
       appBar: AppBar(
-        title: FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance.collection("users").doc(artistId).get(),
+        title: FutureBuilder(
+          future: _dbHelper.getArtistInfo(artistId),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Text("Loading...");
-            } else if (snapshot.hasError) {
-              return Text("Error: ${snapshot.error}");
-            } else if (snapshot.hasData && snapshot.data!.exists) {
-              var artistData = snapshot.data!.data() as Map<String, dynamic>;
-              return Text("${artistData['firstName']}'s Profile"); // Use the 'firstName' from the snapshot.
-            } else {
-              return Text("Artist's Profile");
-            }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+                if (snapshot.hasError) {
+                  print('Error fetching user data: ${snapshot.error}');
+                  return Text('Error: ${snapshot.error}');
+                }
+                if (!snapshot.hasData) {
+                  return const Text('No user data found');
+                }
+            var userDocument = snapshot.data!;
+            var userData = userDocument.data() as Map<String, dynamic>;
+            String firstName = userData['firstName'] ?? 'Unknown';
+
+            return Text("$firstName's Profile");
+            
           },
-        ),
-        actions: [
-          FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance.collection("users").doc(artistId).get(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              } else if (snapshot.hasError) {
-                return Text("Error");
-              } else if (snapshot.hasData && snapshot.data!.exists) {
-                return IconButton(
-                  icon: Icon(Icons.mail),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MessagingScreen(receiverId: artistId),
-                      ),
-                    );
-                  },
-                );
-              } else {
-                return SizedBox();
-              }
-            },
           ),
-        ],
-      ),
+        actions: [
+            // IconButton(
+            //   icon: const Icon(Icons.mail),
+            //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => MessagingScreen(recipientName: artistName, recipientId: artistId)));},  //nav to messaging screen on pressed, pass name and id
+            // ),
+            futuremsgbtn,
+          ],
+        ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -127,13 +157,3 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
     );
   }
 }
-
-// Future<String> getArtistName(){
-//   await _dbHelper.getArtistInfo(artistId).then((doc) {
-//       if (doc.exists){
-//         return doc.get("firstName").toString();
-//       } else {
-//         return "NAME_NOTFOUND";
-//       }
-//     })
-// }

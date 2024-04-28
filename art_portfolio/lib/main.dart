@@ -53,10 +53,10 @@ class MyApp extends StatelessWidget {
           '/login': (context) => LoginScreen(),
           '/register': (context) => RegistrationScreen(),
           '/home': (context) => HomeScreen(),
-          '/artist_profile': (context) => ArtistProfileScreen(artistId: 'the_artist_id'), // You need to provide the actual artistId
-          // '/collection_detail': (context) => CollectionDetailScreen(),
+          //'/artist_profile': (context) => ArtistProfileScreen(),
+          '/collection_detail': (context) => CollectionDetailScreen(),
           '/edit_profile': (context) => EditProfileScreen(),
-//          '/messaging': (context) => MessagingScreen(),
+          //'/messaging': (context) => MessagingScreen(),
           '/user_profile': (context) => UserProfileScreen(),
         },
       ),
