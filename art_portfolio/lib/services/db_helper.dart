@@ -34,11 +34,10 @@ Future<String> uploadImage(File imageFile, String basePath, String artistId) asy
 
 // Function to create a new collection in Firestore
 Future<List<String>> addCollection(String title, List<String> artworkIds, String artistId) async {
-  // Add the collection to Firestore with both imageUrls and artworkIds
   print('Adding collection with URLs: $artworkIds');
   DocumentReference collectionRef = await _firestore.collection('collections').add({
       'title': title,
-      'artworkIds': artworkIds, // Make sure this field name matches the one used in Firestore
+      'artworkIds': artworkIds, 
       'artistId': artistId,
       'timestamp': FieldValue.serverTimestamp(),
   });
