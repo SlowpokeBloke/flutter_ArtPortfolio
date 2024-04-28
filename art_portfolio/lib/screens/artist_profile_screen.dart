@@ -35,7 +35,8 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
         return "NAME_NOTFOUND";
       }
     });
-    Widget FutureMsgBtn = FutureBuilder(
+    
+    Widget futuremsgbtn = FutureBuilder(
       future: artistName,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done && !snapshot.hasError){
@@ -54,15 +55,51 @@ class _ArtistProfileScreenState extends State<ArtistProfileScreen> {
         }
       },
     );
+
+    // Widget FutureAppBar = FutureBuilder(
+    //   future: _dbHelper.getArtistInfo(artistId),
+    //   builder: (context, snapshot) {
+    //     var userDocument = snapshot.data!;
+    //     var userData = userDocument.data() as Map<String, dynamic>;
+    //     String firstName = userData['firstName'] ?? 'Unknown';
+    //     String artistId = userDocument.reference.id;
+        
+    //     return AppBar(
+    //       title: Text("$firstName's Profile"),
+    //       actions: [futuremsgbtn],
+    //     );
+    //   }
+    // );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("$artistName's Profile"),
+        title: FutureBuilder(
+          future: _dbHelper.getArtistInfo(artistId),
+          builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+                if (snapshot.hasError) {
+                  print('Error fetching user data: ${snapshot.error}');
+                  return Text('Error: ${snapshot.error}');
+                }
+                if (!snapshot.hasData) {
+                  return const Text('No user data found');
+                }
+            var userDocument = snapshot.data!;
+            var userData = userDocument.data() as Map<String, dynamic>;
+            String firstName = userData['firstName'] ?? 'Unknown';
+
+            return Text("$firstName's Profile");
+            
+          },
+          ),
         actions: [
             // IconButton(
             //   icon: const Icon(Icons.mail),
             //   onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => MessagingScreen(recipientName: artistName, recipientId: artistId)));},  //nav to messaging screen on pressed, pass name and id
             // ),
-            FutureMsgBtn,
+            futuremsgbtn,
           ],
         ),
       body: Column(

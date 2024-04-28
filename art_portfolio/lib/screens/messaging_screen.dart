@@ -82,7 +82,7 @@ class _MessagingScreenState extends State<MessagingScreen>{
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          //mainAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment: (data['senderId'] == _firebaseAuth.currentUser!.uid)? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             Text(data['senderEmail']),
             Text(data['message']),
