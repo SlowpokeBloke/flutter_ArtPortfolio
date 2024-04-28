@@ -13,7 +13,6 @@ class DBHelper {
 
   // Function to upload image to Firebase Storage and return the URL
 Future<String> uploadImage(File imageFile, String basePath, String artistId) async {
-  // Create a unique file name
   String fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
   Reference ref = _storage.ref().child('$basePath/$artistId/$fileName');
   UploadTask uploadTask = ref.putFile(imageFile);
