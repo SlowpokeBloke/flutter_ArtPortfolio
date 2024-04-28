@@ -28,9 +28,15 @@ Widget build(BuildContext context) {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            
             children: <Widget>[
-              FlutterLogo(size: 100), // Replace with your app's logo
-              SizedBox(height: 30),
+                SizedBox(height: 15),
+                Image.asset(
+                  "assets/logo/logo.png",
+                  width: 80,
+                  height: 80,
+                ),
+                SizedBox(height: 20),
               const Text(
                 'Registration',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
