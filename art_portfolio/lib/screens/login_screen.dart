@@ -19,6 +19,8 @@ class LoginScreen extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
+
+
       body: SingleChildScrollView( // Wrap the Column with SingleChildScrollView
         child: Center(
           child: Padding(
@@ -26,8 +28,15 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                FlutterLogo(size: 80), // Replace with your app's logo asset
+
+                Image.asset(
+                  "assets/logo/logo.png",
+                  width: 80,
+                  height: 80,
+                ),
                 SizedBox(height: 48),
+
+
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -102,6 +111,9 @@ class LoginScreen extends StatelessWidget {
           ),
         ),
       ),
+
+
+
     );
   }
 }
